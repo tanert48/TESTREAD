@@ -264,8 +264,6 @@ ITDS362: Software Quality Assurance and Testing
 
 # 🧱 MBCC – Multiple Base Choice Coverage  
 
----
-
 ## Test Suite 7 – UnexpectedCaseStringArrayOptionHandlerTest (StringArrayOptionHandler)
 
 ### 🧩 Task I: Model Input Domain  
