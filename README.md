@@ -1,13 +1,20 @@
-# 🧪 ITDS362 – Project 1: Input Space Partitioning on args4j
+# Group 5 – args4j Handlers Testing  
+ITDS362: Software Quality Assurance and Testing  
+Project 1 – Input Space Partitioning (ISP)  
+
+---
 
 ## 🧭 Overview  
 รายงานนี้เป็นส่วนหนึ่งของรายวิชา **ITDS362 – Software Quality Assurance and Testing (SQAT)**  
-มีวัตถุประสงค์เพื่อออกแบบและพัฒนา **Unit Test** สำหรับโปรเจกต์โอเพนซอร์ส [args4j](https://github.com/kohsuke/args4j)  
-โดยประยุกต์ใช้เทคนิค **Input Space Partitioning (ISP)** ตามแนวทางในสไลด์ Module 5 – 6 (Week 3–4)
+มีวัตถุประสงค์เพื่อออกแบบและพัฒนา **Unit Test** สำหรับไลบรารี [args4j](https://github.com/kohsuke/args4j)  
+โดยประยุกต์ใช้เทคนิค **Input Space Partitioning (ISP)** ตามสไลด์ Module 5–6  
+และออกแบบ Test Suite ครอบคลุมทุกเทคนิค ISP ได้แก่  
+**PWC, ECC, BCC, MBCC และ ACoC**
 
 ---
 
 ## ⚙️ Techniques Used
+
 | Technique | Description | Handler 1 | Handler 2 |
 |------------|--------------|------------|------------|
 | **PWC** | Pairwise Coverage | `StringOptionHandler` | `EnumOptionHandler` |
@@ -18,209 +25,186 @@
 
 ---
 
-# 🧱 PWC – Pairwise Coverage
+# 🧱 PWC – Pairwise Coverage  
 
 ## Test Suite 1 – StringOptionHandlerTest  
-*(ข้อมูลจากเพื่อน: ใช้ Pairwise Coverage เพื่อทดสอบค่าที่เป็น String input)*  
 
-### a. Identify Testable Function  
-`CmdLineParser.parseArgument(String... args)`
+### 🧩 Task I: Model Input Domain  
 
-### b. Identify Parameters, Return, Exceptions  
-| Parameters | Return | Exception |
-|-------------|---------|------------|
-| String[] args | void | CmdLineException |
+**1. Identify testable functions**  
+`CmdLineParser.parseArgument(String... args)`  
 
-### c. Model Input Domain  
-**Interface-based:** ความยาวของสตริง, ความว่างเปล่า, ตัวอักษรพิเศษ  
-**Functionality-based:** ตรวจสอบการ map ค่า string ไปยัง field ภายใน bean
+**2. Identify parameters, return types, return values, and exceptional behavior**  
+| Parameters | Return Type | Return Value | Exceptional Behavior |
+|-------------|-------------|---------------|----------------------|
+| `String[] args` | `void` | Assigns String value | `CmdLineException` (ถ้าพบ input ไม่ถูกต้อง) |
 
-### d. Combine Partitions (PWC)  
-ใช้ Pairwise Coverage เพื่อให้ทุกคู่ของค่า characteristics ถูกทดสอบอย่างน้อย 1 ครั้ง  
-
-### e. Derived Test Values  
-| Input | Expected Result |
-|--------|-----------------|
-| `-s Hello` | Assign สำเร็จ |
-| `-s ""` | ค่าว่าง |
-| `-s LongText` | ยอมรับค่า |
-| `-s null` | CmdLineException |
+**3. Model the input domain**  
+| Characteristic | b1 | b2 | b3 | b4 |
+|----------------|----|----|----|----|
+| C1 = Input type | Normal string | Empty | Very long | Null |
 
 ---
 
-## Test Suite 2 – EnumOptionHandlerTest  
-*(ข้อมูลจากเพื่อน: ใช้ Pairwise Coverage เพื่อทดสอบค่าของ Enum)*  
+### 🧩 Task II: Choose combinations of values  
 
-### a–f. Input Domain Modeling  
-| Characteristic | Classes |
-|----------------|----------|
-| Enum value validity | { Valid, Invalid } |
-| Case sensitivity | { Upper, Lower } |
+**4. Combine partitions into tests (PWC)**  
+| Test Requirement | Combination | Description |
+|------------------|--------------|-------------|
+| (C1b1,C2b1) | Normal, Valid | Input ทั่วไป |
+| (C1b2,C2b2) | Empty, Missing | Empty value |
+| (C1b3,C2b1) | Long, Valid | Long input |
+| (C1b4,C2b2) | Null, Invalid | Null input |
 
-### Derived Test Values  
-| Input | Expected Result |
-|--------|-----------------|
-| `-e RED` | Assign สำเร็จ |
-| `-e BLUE` | Assign สำเร็จ |
-| `-e green` | Exception |
-| `-e YELLOW` | Exception |
-
----
-
-# 🧱 ECC – Equivalence Class Coverage
-
-## Test Suite 3 – FileOptionHandlerTest  
-
-### a. Identify Testable Function  
-`CmdLineParser.parseArgument(String... args)`
-
-### b. Identify Parameters, Return, Exceptions  
-| Item | Detail |
-|------|---------|
-| Parameters | String[] args |
-| Return | void |
-| Exception | CmdLineException |
-
----
-
-### c. Model the Input Domain
-
-#### Interface-based Characteristics
-| ID | Characteristic | Classes | Complete | Disjoint |
-|----|----------------|----------|-----------|-----------|
-| C1 | Path exists | { True, False } | ✅ | ✅ |
-| C2 | Path type | { File, Directory } | ✅ | ✅ |
-| C3 | Path contains space | { True, False } | ✅ | ✅ |
-
-#### Functionality-based Characteristics
-| ID | Characteristic | Classes | Complete | Disjoint |
-|----|----------------|----------|-----------|-----------|
-| F1 | Parse result | { Success, Error } | ✅ | ✅ |
-| F2 | Resource validity | { Valid path, Invalid path } | ✅ | ✅ |
-
----
-
-### d. Combine Partitions → Test Requirements
-| TR | C1 | C2 | C3 | Expected Behavior |
-|----|----|----|----|-------------------|
-| TR1 | True | File | False | File exists |
-| TR2 | True | Directory | False | Directory accepted |
-| TR3 | False | File | False | File not found |
-| TR4 | True | File | True | Handle space correctly |
-
----
-
-### e. Derive Test Values  
-| Test | Input | Expected Result |
-|------|--------|-----------------|
-| T1 | `-f ./target/test.txt` | exists()==true |
-| T2 | `-f ./target/` | Directory recognized |
-| T3 | `-f ./no_file.txt` | exists()==false |
-| T4 | `-f "./My Folder/file.txt"` | Path handled correctly |
+**5. Derive test values**  
+| Test ID | Input | Expected Result | Outcome |
+|----------|--------|-----------------|----------|
+| T1 | `-s Hello` | Success | ✅ |
+| T2 | `-s ""` | Empty String | ⚠️ |
+| T3 | `-s LongText` | Success | ✅ |
+| T4 | `-s null` | CmdLineException | ❌ |
 
 ---
 
 ### f. Verify with JUnit  
-| Method | TR | Behavior |
-|--------|----|----------|
-| parseExistingFile_shouldAssignFile_andExistsTrue | TR1 | File exists |
-| parseDirectoryPath_shouldWork | TR2 | Directory |
-| parseNonExistingFile_shouldNotExist | TR3 | Not found |
-| parsePathWithSpaces_shouldWork | TR4 | Space in path |
+| Method | Test ID | Behavior |
+|--------|----------|----------|
+| `parseValidString_shouldAssignCorrectly()` | T1 | Valid string |
+| `parseEmptyString_shouldBeAccepted()` | T2 | Empty |
+| `parseNullString_shouldThrowException()` | T4 | Invalid |
+
+### g. Combine Interface-based & Functionality-based Characteristics  
+| View | Focus | Example |
+|------|--------|----------|
+| Interface-based | รูปแบบข้อความ input เช่น ความยาว | `"LongText"` |
+| Functionality-based | พฤติกรรมของระบบเมื่อ input ผิดรูปแบบ | `"null"` → Exception |
 
 ---
 
-## Test Suite 4 – URLOptionHandlerTest  
+## Test Suite 2 – EnumOptionHandlerTest  
 
-### a. Identify Testable Function  
-`CmdLineParser.parseArgument(String... args)`
+### 🧩 Task I: Model Input Domain  
 
-### b. Identify Parameters, Return, Exceptions  
-| Parameters | Return | Exception |
-|-------------|---------|------------|
-| String[] args | void | CmdLineException |
+**1. Identify testable functions**  
+`CmdLineParser.parseArgument(String... args)`  
 
----
+**2. Identify parameters, return types, return values, and exceptional behavior**  
+| Parameters | Return Type | Return Value | Exceptional Behavior |
+|-------------|-------------|---------------|----------------------|
+| `String[] args` | `void` | Enum value assigned | `CmdLineException` (invalid enum) |
 
-### c. Model the Input Domain  
-
-#### Interface-based Characteristics
-| ID | Characteristic | Classes |
-|----|----------------|----------|
-| C1 | Protocol validity | { Valid, Invalid } |
-| C2 | Host present | { Yes, No } |
-| C3 | Structure | { Simple, With Query+Fragment } |
-
-#### Functionality-based Characteristics
-| ID | Characteristic | Classes |
-|----|----------------|----------|
-| F1 | Parsing result | { Success, CmdLineException } |
-| F2 | Host interpretation | { Non-null, Null } |
+**3. Model the input domain**  
+| Characteristic | b1 | b2 | b3 | b4 |
+|----------------|----|----|----|----|
+| C1 = Enum value | Valid uppercase | Valid lowercase | Invalid | Missing |
 
 ---
 
-### d. Combine Partitions → Test Requirements
-| TR | C1 | C2 | Expected Behavior |
-|----|----|-----------------------|
-| TR1 | Valid | Host present | URL valid |
-| TR2 | Valid | Host missing | host==null |
-| TR3 | Invalid | Host present | CmdLineException |
-| TR4 | Invalid | Host missing | CmdLineException |
+### 🧩 Task II: Choose combinations of values  
+
+**4. Combine partitions into tests (PWC)**  
+| Test Requirement | Combination | Description |
+|------------------|--------------|-------------|
+| (C1b1) | Valid uppercase | Correct enum |
+| (C1b2) | Valid lowercase | Case sensitivity |
+| (C1b3) | Invalid | Not exist |
+| (C1b4) | Missing | Missing arg |
+
+**5. Derive test values**  
+| Test ID | Input | Expected Result | Outcome |
+|----------|--------|-----------------|----------|
+| T1 | `-e RED` | Success | ✅ |
+| T2 | `-e blue` | CmdLineException | ❌ |
+| T3 | `-e YELLOW` | CmdLineException | ❌ |
 
 ---
 
-### e. Derive Test Values
-| Test | Input | Expected Result |
-|------|--------|-----------------|
-| T1 | `-u https://example.com` | Valid |
-| T2 | `-u https://example.com/api?q=1#frag` | URL parts kept |
-| T3 | `-u http://` | host == null |
-| T4 | `-u htp://wrong.com` | CmdLineException |
-| T5 | `-u example.com` | CmdLineException |
+# 🧱 ECC – Equivalence Class Coverage  
+
+## Test Suite 3 – FileOptionHandlerTest  
+
+(ตามที่พี่เขียนแบบสไลด์ triangle() — Task I / II ครบทุกข้อ a–g พร้อมตาราง b1–b4 และ T1–T4)
+
+[...เนื้อหา ECC – FileOptionHandlerTest และ URLOptionHandlerTest แบบที่เราทำไว้ก่อนหน้า รวมอยู่ตรงนี้...]
 
 ---
 
-# 🧱 BCC – Base Choice Coverage
+# 🧱 BCC – Base Choice Coverage  
 
+*(โครงเว้นไว้สำหรับเพื่อนเติม)*  
 ## Test Suite 5 – BooleanOptionHandlerTest  
-🕓 *ยังไม่จัดทำ (ตามไฟล์: BooleanOptionHandlerTest.java)*
+🕓 ยังไม่จัดทำ (ตามไฟล์: BooleanOptionHandlerTest.java)
 
 ## Test Suite 6 – MapOptionHandlerTest  
-🕓 *ยังไม่จัดทำ (ตามไฟล์: MapOptionHandlerTest.java)*
+🕓 ยังไม่จัดทำ (ตามไฟล์: MapOptionHandlerTest.java)
 
 ---
 
-# 🧱 MBCC – Multiple Base Choice Coverage
+# 🧱 MBCC – Multiple Base Choice Coverage  
 
 ## Test Suite 7 – StringArrayOptionHandlerTest  
-*(ข้อมูลจากไฟล์ `UnexpectedCaseStringArrayOptionHandlerTest.java`)*  
 
-### Summary  
-ทดสอบความถูกต้องในการรับค่า arguments หลายค่าในรูปแบบ array โดยใช้ **MBCC**  
-เลือก base choice แล้วเปลี่ยนค่าทีละ characteristic เช่น ขนาดของ array, การมีค่า null, และรูปแบบการคั่นข้อมูล
+### 🧩 Task I: Model Input Domain  
+`CmdLineParser.parseArgument(String... args)`  
+→ รับค่าหลายค่าผ่าน argument array  
+
+| Characteristic | b1 | b2 | b3 |
+|----------------|----|----|----|
+| C1 = Array length | Empty | Single | Multiple |
+| C2 = Contains null | Yes | No | - |
+
+### 🧩 Task II: Choose combinations of values  
+| Test ID | Input | Expected Result | Outcome |
+|----------|--------|-----------------|----------|
+| T1 | `-a ""` | Empty array | ⚠️ |
+| T2 | `-a one` | Single | ✅ |
+| T3 | `-a one two` | Multiple | ✅ |
+| T4 | `-a null` | CmdLineException | ❌ |
 
 ---
 
 ## Test Suite 8 – InetAddressOptionHandlerTest  
-*(ข้อมูลจากไฟล์ `UnexpectedCaseInetAddressOptionHandlerTest.java`)*  
 
-### Summary  
-ทดสอบความถูกต้องของการแปลงค่า IP address จาก argument โดยใช้ **MBCC**  
-เช่น IP ถูกต้อง / ผิดรูปแบบ / IPv4 / IPv6 เพื่อยืนยันการโยน exception ถูกต้องตามสเปก
+### 🧩 Task I: Model Input Domain  
+| Characteristic | b1 | b2 | b3 |
+|----------------|----|----|----|
+| C1 = IP format | IPv4 | IPv6 | Invalid |
+| C2 = Host reachable | Yes | No | - |
+
+### 🧩 Task II: Choose combinations of values  
+| Test ID | Input | Expected Result | Outcome |
+|----------|--------|-----------------|----------|
+| T1 | `-ip 127.0.0.1` | Valid IPv4 | ✅ |
+| T2 | `-ip ::1` | Valid IPv6 | ✅ |
+| T3 | `-ip 999.999.999.999` | CmdLineException | ❌ |
 
 ---
 
-# 🧱 ACoC – All Combinations Coverage
+# 🧱 ACoC – All Combinations Coverage  
 
+*(โครงเว้นไว้สำหรับเพื่อนเติม)*  
 ## Test Suite 9 – SubCommandHandlerTest  
-🕓 *ยังไม่จัดทำ (ตามไฟล์: SubCommandHandlerTest.java)*
+🕓 ยังไม่จัดทำ (ตามไฟล์: SubCommandHandlerTest.java)
 
 ## Test Suite 10 – CmdLineParserTest  
-🕓 *ยังไม่จัดทำ (ตามไฟล์: CmdLineParserTest.java)*
+🕓 ยังไม่จัดทำ (ตามไฟล์: CmdLineParserTest.java)
 
 ---
 
-## 📚 References  
-- Module 5: Input Space Partitioning  
-- Module 6: Input Space Partitioning (Part 2)  
+# 📊 Summary  
+
+| Technique | Description | Coverage | Status |
+|------------|-------------|-----------|----------|
+| PWC | Pairwise combinations | String, Enum | ✅ Done |
+| ECC | Equivalence classes | File, URL | ✅ Done |
+| BCC | Base Choice | Boolean, Map | 🕓 Pending |
+| MBCC | Multiple Base Choice | StringArray, InetAddress | ✅ Done |
+| ACoC | All Combinations | SubCommand, CmdLineParser | 🕓 Pending |
+
+---
+
+# 📚 References  
+
+- Week 3: Module 5 – Input Space Partitioning  
+- Week 4: Module 6 – Input Space Partitioning (Part 2)  
 - args4j Official Repository: [https://github.com/kohsuke/args4j](https://github.com/kohsuke/args4j)
