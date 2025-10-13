@@ -264,35 +264,160 @@ ITDS362: Software Quality Assurance and Testing
 
 # 🧱 MBCC – Multiple Base Choice Coverage  
 
-## Test Suite 7 – StringArrayOptionHandlerTest  
+---
 
-| Characteristic | b1 | b2 | b3 |
-|----------------|----|----|----|
-| C1 = Array length | Empty | Single | Multiple |
-| C2 = Contains null | Yes | No | - |
+## Test Suite 7 – UnexpectedCaseStringArrayOptionHandlerTest (StringArrayOptionHandler)
 
-| Test ID | Input | Expected Result | Outcome |
-|----------|--------|-----------------|----------|
-| T1 | `-a ""` | Empty array | ⚠️ |
-| T2 | `-a one` | Single | ✅ |
-| T3 | `-a one two` | Multiple | ✅ |
-| T4 | `-a null` | CmdLineException | ❌ |
+### 🧩 Task I: Model Input Domain  
+
+**1. Identify testable functions**  
+`StringArrayOptionHandler.parseArguments(Parameters params)`  
+→ อ่านอาร์กิวเมนต์หลายค่าแล้วเพิ่มลงในฟิลด์ `String[]` ของ bean
 
 ---
 
-## Test Suite 8 – InetAddressOptionHandlerTest  
+**2. Identify parameters, return types, return values, and exceptional behavior**  
 
-| Characteristic | b1 | b2 | b3 |
-|----------------|----|----|----|
-| C1 = IP format | IPv4 | IPv6 | Invalid |
-| C2 = Host reachable | Yes | No | - |
+| Parameters | Return Type | Return Value / Side Effect | Exceptional Behavior |
+|-------------|--------------|-----------------------------|----------------------|
+| `Parameters params` | `int` | จำนวนอาร์กิวเมนต์ที่ consume และเพิ่มลงใน `String[]` | `CmdLineException` (ถ้า parser หรือรูปแบบผิดพลาด) |
+
+---
+
+**3. Model the input domain (เลือก Base Choice + พัฒนาลักษณะ)**  
+
+> Base Choice: อินพุตปกติ หลายค่า ไม่มีค่าว่าง
+
+| ID | Characteristic | b1 (Base Choice) | b2 | b3 |
+|----|----------------|------------------|----|----|
+| C1 | เนื้อหาของอาร์กิวเมนต์ | สตริงปกติ (non-empty) | สตริงว่าง `""` | สตริงมีแต่ช่องว่าง `" "` |
+| C2 | จำนวนอาร์กิวเมนต์ | หลายค่า (≥2) | ค่าเดียว | – |
+
+---
+
+### 🧩 Task II: Choose combinations of values (MBCC)
+
+**4. Combine partitions into tests (จาก Base → เปลี่ยนทีละ characteristic)**  
+
+| Test Requirement (TR) | Combination | คำอธิบาย |
+|------------------|--------------|------------|
+| Base | (C1=b1, C2=b1) | หลายค่า ปกติ |
+| TR1 | (C1=b2, C2=b1) | แทรกค่าว่าง `""` กลางชุด |
+| TR2 | (C1=b3, C2=b1) | แทรก `" "` ช่องว่างล้วนกลางชุด |
+| TR3 | (C1=b1, C2=b2) | ลดเหลือค่าเดียว ปกติ |
+
+---
+
+**5. Derive test values**  
+
+| Test ID | Input (ตัวอย่างพารามิเตอร์) | Expected Result | Outcome |
+|----------|-------------------------------|-----------------|----------|
+| **T-Base** | `{"a","b","c"}` | `["a","b","c"]` | ✅ Success |
+| **T1** | `{"a","","b"}` | ยอมรับ `""` เป็น element | ⚠️ Special |
+| **T2** | `{"a"," ","b"}` | `" "` ถูกละทิ้ง | ⚠️ Special |
+| **T3** | `{"solo"}` | `["solo"]` | ✅ Success |
+
+---
+
+### f. Verify with JUnit  
+
+| JUnit Method | Test ID | Behavior |
+|---------------|----------|-----------|
+| `testParseWithEmptyStringArgument()` | T1 | ยอมรับ `""` ได้ |
+| `testParseWithSpaceAsArgument()` | T2 | `" "` ถูกละทิ้ง |
+| *(เพิ่มเติม)* `testParseBaseMultiple()` | T-Base | หลายค่า ปกติ |
+| *(เพิ่มเติม)* `testParseSingle()` | T3 | ค่าเดียว ปกติ |
+
+---
+
+### g. Combine Interface-based & Functionality-based Characteristics  
+
+| มุมมอง | โฟกัส | ตัวอย่าง |
+|----------|--------|----------|
+| **Interface-based** | โครงสร้าง argument เช่น จำนวนสมาชิก / เป็น `""` หรือ `" "` | `{"a","","b"}`, `{"a"," ","b"}` |
+| **Functionality-based** | พฤติกรรมหลัง parse (เก็บ, ละทิ้ง, นับจำนวน) | `""` → เก็บไว้, `" "` → ละทิ้ง |
+
+---
+
+## Test Suite 8 – UnexpectedCaseInetAddressOptionHandlerTest (InetAddressOptionHandler)
+
+### 🧩 Task I: Model Input Domain  
+
+**1. Identify testable functions**  
+`InetAddressOptionHandler.parse(String argument)`  
+→ แปลงสตริงเป็น `InetAddress`
+
+---
+
+**2. Identify parameters, return types, return values, and exceptional behavior**  
+
+| Parameters | Return Type | Return Value | Exceptional Behavior |
+|-------------|--------------|---------------|----------------------|
+| `String argument` | `InetAddress` | คืนค่า InetAddress จาก argument | `CmdLineException` (ถ้า parse ไม่ได้) |
+
+---
+
+**3. Model the input domain (เลือก Base Choice + พัฒนาลักษณะ)**  
+
+> Base Choice: IPv4 ปกติ `"1.2.3.4"`
+
+| ID | Characteristic | b1 (Base Choice) | b2 |
+|----|----------------|------------------|----|
+| C1 | รูปแบบสตริงอินพุต | IPv4 ปกติ | สตริงว่าง `""` |
+| C2 | ประเภทที่อยู่ | ปกติทั่วไป | **Loopback** (`127.0.0.1`) |
+
+หมายเหตุ: ใน JDK, `InetAddress.getByName("")` → loopback
+
+---
+
+### 🧩 Task II: Choose combinations of values (MBCC)
+
+**4. Combine partitions into tests (จาก Base → เปลี่ยนทีละ characteristic)**  
+
+| Test Requirement (TR) | Combination | คำอธิบาย |
+|------------------|--------------|------------|
+| Base | (C1=b1, C2=b1) | IPv4 ปกติ |
+| TR1 | (C1=b1, C2=b2) | Loopback (`127.0.0.1`) |
+| TR2 | (C1=b2, C2=b1) | ใช้ค่าว่าง `""` (JDK map เป็น loopback) |
+
+---
+
+**5. Derive test values**  
 
 | Test ID | Input | Expected Result | Outcome |
 |----------|--------|-----------------|----------|
-| T1 | `-ip 127.0.0.1` | Valid IPv4 | ✅ |
-| T2 | `-ip ::1` | Valid IPv6 | ✅ |
-| T3 | `-ip 999.999.999.999` | CmdLineException | ❌ |
+| **T-Base** | `"8.8.8.8"` | IPv4 ปกติ | ✅ Success |
+| **T1** | `"127.0.0.1"` | Loopback address | ✅ Success |
+| **T2** | `""` | Map เป็น loopback | ⚠️ Special |
 
+---
+
+### f. Verify with JUnit  
+
+| JUnit Method | Test ID | Behavior |
+|---------------|----------|-----------|
+| `testParseLoopbackAddress()` | T1 | คืนค่า loopback |
+| `testParseEmptyString()` | T2 | `""` → loopback |
+| *(เพิ่มเติม)* `testParseBaseIPv4()` | T-Base | IPv4 ปกติ |
+| *(เพิ่มเติม)* `testParseInvalidIp_shouldThrow()` | – | Invalid IP → Exception |
+
+---
+
+### g. Combine Interface-based & Functionality-based Characteristics  
+
+| มุมมอง | โฟกัส | ตัวอย่าง |
+|----------|--------|----------|
+| **Interface-based** | รูปแบบสตริง เช่น IPv4, ว่าง | `"8.8.8.8"`, `""` |
+| **Functionality-based** | พฤติกรรมระบบ เช่น map loopback หรือ throw | `""` → loopback, `"999.999.999.999"` → Exception |
+
+---
+
+### 🧾 Summary of MBCC  
+
+| Handler | Base Choice | Special Cases Covered | ผลลัพธ์หลัก |
+|----------|--------------|-----------------------|---------------|
+| **StringArrayOptionHandler** | หลายค่า `"a","b","c"` | `""` (เก็บไว้), `" "` (ละทิ้ง), ค่าเดียว | การ parse array ยืดหยุ่นและ trim ถูกต้อง |
+| **InetAddressOptionHandler** | IPv4 `"8.8.8.8"` | loopback (`127.0.0.1`), ค่าว่าง `""` | ครอบคลุม edge case ของ JDK (loopback mapping) |
 ---
 
 # 🧱 ACoC – All Combinations Coverage  
